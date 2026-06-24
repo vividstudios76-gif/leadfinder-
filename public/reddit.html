@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reddit Lead Finder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+:root {
+  --bg:#0a0a0f;--surface:#111118;--surface2:#1a1a24;--surface3:#22222f;
+  --border:#2a2a3a;--accent:#ff6314;--green:#00d4aa;--yellow:#ffd166;
+  --text:#e8e8f0;--muted:#6b6b80;--red:#ff6584;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--accent);}
+.logo span{color:var(--text);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.btn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;padding:5px 12px;transition:all .15s;}
+.btn:hover{border-color:var(--accent);color:var(--text);}
+.btn.p{background:var(--accent);border-color:var(--accent);color:white;font-weight:600;}
+.btn.p:hover{background:#e55a0e;}
+.inp{background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;padding:5px 12px;}
+.inp:focus{border-color:var(--accent);}
+.body{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sh{padding:12px 12px 6px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+.ss{flex:1;overflow-y:auto;padding:4px 8px;}
+.cl{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;padding:10px 6px 4px;}
+.ki{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent;transition:all .1s;}
+.ki:hover{background:var(--surface2);}
+.ki.active{background:var(--surface2);border-color:var(--accent);}
+.kc{width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.ki.active .kc{background:var(--accent);border-color:var(--accent);color:white;}
+.kt{font-size:12px;flex:1;}
+.kn{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);background:var(--surface3);border-radius:8px;padding:1px 6px;}
+.sf{padding:8px;border-top:1px solid var(--border);display:flex;gap:6px;}
+.sf input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;}
+.sf input:focus{border-color:var(--accent);}
+.sf button{background:var(--accent);border:none;border-radius:6px;color:white;cursor:pointer;font-size:16px;font-weight:700;padding:0 10px;}
+.abar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:38px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.ach{background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--muted);cursor:pointer;font-size:12px;font-weight:500;padding:3px 12px;transition:all .12s;}
+.ach:hover{border-color:var(--accent);color:var(--text);}
+.ach.active{border-color:var(--accent);color:var(--text);background:rgba(255,99,20,.15);}
+.cols{flex:1;overflow-x:auto;overflow-y:hidden;display:flex;padding:12px;gap:12px;}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:var(--muted);text-align:center;}
+.col{width:310px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;height:100%;}
+.ch{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.ct{font-size:12px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ca{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 2px;transition:color .1s;}
+.ca:hover{color:var(--text);}
+.cb{flex:1;overflow-y:auto;}
+.cl-msg{padding:30px;text-align:center;color:var(--muted);font-size:12px;}
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.post{padding:12px 14px;border-bottom:1px solid var(--border);transition:background .1s;}
+.post:hover{background:var(--surface2);}
+.post.new{border-left:2px solid var(--accent);}
+.pm{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+.ps{background:rgba(255,69,0,.15);color:#ff4500;border-radius:4px;font-size:10px;font-weight:600;padding:2px 6px;}
+.pa2{font-size:11px;color:var(--muted);}
+.pt{font-size:10px;color:var(--muted);margin-left:auto;font-family:'JetBrains Mono',monospace;}
+.ptitle{font-size:12px;font-weight:600;line-height:1.4;margin-bottom:5px;}
+.ptitle .hl{color:var(--yellow);}
+.pbody{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;max-height:60px;overflow:hidden;}
+.pstats{display:flex;gap:10px;margin-bottom:8px;}
+.pstat{font-size:10px;color:var(--muted);}
+.pstat span{color:var(--text);font-weight:600;}
+.pactions{display:flex;gap:6px;}
+.pab{background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--muted);cursor:pointer;font-size:11px;font-weight:500;padding:4px 10px;text-decoration:none;display:inline-block;transition:all .12s;}
+.pab:hover{border-color:var(--accent);color:var(--accent);}
+.pab.reply{border-color:#ff4500;color:#ff4500;background:rgba(255,69,0,.08);}
+.pab.logged{opacity:.5;pointer-events:none;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">🔴 reddit<span>/finder</span></div>
+  <div class="dot"></div>
+  <span style="font-size:11px;color:var(--green)">Live — No API key needed</span>
+  <input class="inp" id="qs" placeholder="Search keyword or r/subreddit..." style="width:240px">
+  <button class="btn p" id="badd">+ Column</button>
+  <div class="header-right">
+    <button class="btn" id="bref">↻ Refresh All</button>
+    <button class="btn" id="ball">Open All</button>
+  </div>
+</div>
+<div class="abar">
+  <span style="font-size:11px;color:var(--muted)">Agent:</span>
+  <div id="acs"></div>
+  <button class="btn" id="baga" style="font-size:11px;padding:3px 8px">+ Add</button>
+</div>
+<div class="body">
+  <div class="sidebar">
+    <div class="sh">Keywords</div>
+    <div class="ss" id="kwl"></div>
+    <div class="sf"><input id="kwi" placeholder="Add keyword..."><button id="bkwa">+</button></div>
+  </div>
+  <div class="cols" id="cols">
+    <div class="empty">
+      <div style="font-size:48px">🔍</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text)">No columns open</div>
+      <div>Click keywords on the left or type above</div>
+    </div>
+  </div>
+</div>
+<script>
+const KWS=[
+  {cat:'🎨 Commissions',kws:['looking to commission','want to commission','commission open','need artist','looking for artist','find artist','who does commissions','hiring artist','need illustrator']},
+  {cat:'🐺 Furry',kws:['fursuit commission','fursuit maker','furry commission','fursona art','looking for fursuit','anthro commission','fursuit head']},
+  {cat:'🎲 DnD / Fantasy',kws:['dnd character commission','character art commission','oc commission','fantasy art commission','ttrpg art','pathfinder art']},
+  {cat:'🎭 VTuber',kws:['vtuber model commission','live2d commission','vtuber rigger','vtuber emote commission','vtuber artist']},
+  {cat:'🌐 3D / VRChat',kws:['vrchat avatar commission','3d model commission','blender commission','3d character commission','vrm model']},
+  {cat:'🎬 Animation',kws:['animation commission','looking for animator','animated emotes commission','2d animation commission']},
+  {cat:'🖼 Illustration',kws:['illustration commission','digital art commission','ref sheet commission','emote commission','pfp commission','chibi commission','sticker commission']},
+  {cat:'💬 Buyer Signals',kws:['willing to pay for art','paying for commission','artist recommendations','recommend an artist','how much for commission']},
+];
+const COLORS=['#ff6314','#00d4aa','#ffd166','#6c63ff','#ff6584','#4ecdc4','#ff9f43'];
+let customKws=JSON.parse(localStorage.getItem('rlfCkws')||'[]');
+let agents=JSON.parse(localStorage.getItem('rlfAgents')||'[]');
+let activeAgent=localStorage.getItem('rlfAgent')||null;
+let openCols=[];
+let loggedIds=new Set(JSON.parse(localStorage.getItem('rlfLogged')||'[]'));
+
+function save(){
+  localStorage.setItem('rlfCkws',JSON.stringify(customKws));
+  localStorage.setItem('rlfAgents',JSON.stringify(agents));
+  localStorage.setItem('rlfLogged',JSON.stringify([...loggedIds].slice(-1000)));
+  if(activeAgent)localStorage.setItem('rlfAgent',activeAgent);
+}
+
+// PullPush API — no auth needed
+async function searchReddit(query,count=25){
+  const subM=query.match(/^r\/(\w+)$/i);
+  
+  // Use Reddit RSS — always available, no API key, real-time posts
+  // RSS gives us the actual latest posts just like browsing Reddit
+  let rssUrl;
+  if(subM){
+    rssUrl=`https://www.reddit.com/r/${encodeURIComponent(subM[1])}/new.json?limit=${count}&raw_json=1`;
+  } else {
+    rssUrl=`https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=new&limit=${count}&t=month&raw_json=1`;
+  }
+
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),8000);
+  try{
+    const res=await fetch(rssUrl,{
+      signal:controller.signal,
+      headers:{'Accept':'application/json'}
+    });
+    clearTimeout(timeout);
+    if(!res.ok) throw new Error('Reddit error: '+res.status);
+    const data=await res.json();
+    const items=(data?.data?.children||[]).map(c=>c.data);
+    if(!items.length) return [];
+    const thirtyDaysAgo=Date.now()-30*24*60*60*1000;
+    return items
+      .filter(p=>new Date(p.created_utc*1000)>thirtyDaysAgo)
+      .map(p=>({
+        id:p.id||Math.random().toString(36),
+        title:p.title||'',
+        body:(p.selftext||'').slice(0,250),
+        author:p.author||'',
+        sub:p.subreddit||'',
+        url:'https://reddit.com'+(p.permalink||''),
+        score:p.score||0,
+        comments:p.num_comments||0,
+        time:new Date((p.created_utc||0)*1000).toISOString(),
+        isNew:false,
+      }));
+  }catch(e){
+    clearTimeout(timeout);
+    throw new Error('Reddit temporarily unavailable: '+e.message);
+  }
+}
+
+function openCol(query){
+  if(openCols.find(c=>c.query===query))return;
+  const col={id:Date.now()+'_'+query,query,posts:[],loading:true,error:null,seenIds:new Set(),newCount:0};
+  openCols.push(col);
+  const wrap=document.getElementById('cols');
+  wrap.querySelector('.empty')?.remove();
+  const el=document.createElement('div');
+  el.className='col';el.dataset.cid=col.id;
+  el.innerHTML=`<div class="ch"><div class="ct" title="${esc(query)}">🔴 ${esc(query)}</div><button class="ca" data-reload="${col.id}">↻</button><button class="ca" data-close="${col.id}">×</button></div><div class="cb" id="cb_${col.id}"></div>`;
+  wrap.appendChild(el);
+  loadCol(col);
+  col.timer=setInterval(()=>loadCol(col),120000);
+  renderKws();
+}
+
+function closeCol(id){
+  const col=openCols.find(c=>c.id===id);
+  if(col?.timer)clearInterval(col.timer);
+  openCols=openCols.filter(c=>c.id!==id);
+  document.querySelector(`[data-cid="${id}"]`)?.remove();
+  if(!openCols.length)document.getElementById('cols').innerHTML='<div class="empty"><div style="font-size:48px">🔍</div><div style="font-size:16px;font-weight:600;color:var(--text)">No columns open</div><div>Click keywords on the left or type above</div></div>';
+  renderKws();
+}
+
+async function loadCol(col){
+  col.loading=true;col.error=null;
+  const btn=document.querySelector(`[data-reload="${col.id}"]`);
+  if(btn)btn.style.animation='spin .8s linear infinite';
+  updateBody(col);
+  try{
+    const posts=await searchReddit(col.query);
+    let nc=0;
+    posts.forEach(p=>{
+      if(!col.seenIds.has(p.id)){p.isNew=col.posts.length>0;col.seenIds.add(p.id);if(p.isNew)nc++;}
+    });
+    col.posts=posts;col.newCount=nc;col.loading=false;col.error=null;
+  }catch(e){col.loading=false;col.error=e.message;}
+  if(btn)btn.style.animation='';
+  updateBody(col);renderKws();
+}
+
+function updateBody(col){
+  const body=document.getElementById('cb_'+col.id);
+  if(!body)return;
+  if(col.loading&&!col.posts.length){body.innerHTML='<div class="cl-msg"><div class="spin"></div>Searching Reddit...</div>';return;}
+  if(col.error){body.innerHTML=`<div class="cl-msg" style="color:var(--red)">⚠ ${esc(col.error)}<br><small>PullPush may be temporarily down. Try again in a moment.</small><br><button class="btn" style="margin-top:8px" data-retry="${col.id}">Retry</button></div>`;return;}
+  if(!col.posts.length){body.innerHTML='<div class="cl-msg">No results found</div>';return;}
+  body.innerHTML=col.posts.map(p=>postCard(p,col.query)).join('');
+}
+
+function postCard(p,query){
+  const time=relTime(p.time);
+  const title=hl(esc(p.title),query);
+  const logged=loggedIds.has(p.id);
+  return `<div class="post${p.isNew?' new':''}">
+    <div class="pm"><span class="ps">r/${esc(p.sub)}</span><span class="pa2">u/${esc(p.author)}</span><span class="pt">${time}</span></div>
+    <div class="ptitle">${title}</div>
+    ${p.body?`<div class="pbody">${esc(p.body)}</div>`:''}
+    <div class="pstats"><div class="pstat">▲ <span>${p.score}</span></div><div class="pstat">💬 <span>${p.comments}</span></div></div>
+    <div class="pactions">
+      <a class="pab" href="${p.url}" target="_blank">Open</a>
+      <a class="pab reply" href="${p.url}" target="_blank">Reply</a>
+      <button class="pab ${logged?'logged':''}" data-log="${p.id}" data-author="${esc(p.author)}" data-url="${esc(p.url)}">${logged?'✓ Logged':'+ Log'}</button>
+    </div>
+  </div>`;
+}
+
+function renderKws(){
+  const all=[...KWS,...(customKws.length?[{cat:'🔎 Custom',kws:customKws}]:[])];
+  document.getElementById('kwl').innerHTML=all.map(g=>`
+    <div class="cl">${g.cat}</div>
+    ${g.kws.map(kw=>{
+      const col=openCols.find(c=>c.query===kw);
+      const n=col?.posts?.length||0;
+      return `<div class="ki ${col?'active':''}" data-kw="${esc(kw)}"><div class="kc">${col?'✓':''}</div><div class="kt">${esc(kw)}</div>${n?`<div class="kn">${n}</div>`:''}</div>`;
+    }).join('')}
+  `).join('');
+}
+
+function renderAgents(){
+  const c=document.getElementById('acs');
+  if(!agents.length){c.innerHTML='<span style="font-size:11px;color:var(--muted);font-style:italic">Add your name →</span>';return;}
+  c.innerHTML=agents.map((a,i)=>{
+    const color=COLORS[i%COLORS.length];
+    const active=activeAgent===a.id;
+    return `<button class="ach ${active?'active':''}" data-agent="${a.id}" style="${active?`border-color:${color};background:${color}22;color:${color}`:''}">${esc(a.name)}</button>`;
+  }).join('');
+}
+
+function logReach(id,author,url,btn){
+  if(loggedIds.has(id))return;
+  loggedIds.add(id);save();
+  btn.textContent='✓ Logged';btn.classList.add('logged');
+  try{
+    const t=JSON.parse(localStorage.getItem('outreachTracker')||'{"agents":[],"logs":[]}');
+    if(activeAgent){
+      t.logs.push({id:Date.now().toString(),agentId:activeAgent,platform:'reddit',action:'reply',postUrl:url,clientName:'u/'+author,gotResponse:'no',notes:'From Reddit Finder',date:new Date().toISOString().split('T')[0],ts:Date.now()});
+      localStorage.setItem('outreachTracker',JSON.stringify(t));
+    }
+  }catch(e){}
+}
+
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const kwEl=t.closest('.ki');
+  if(kwEl){const kw=kwEl.dataset.kw;const ex=openCols.find(c=>c.query===kw);if(ex)closeCol(ex.id);else openCol(kw);renderKws();return;}
+  if(t.dataset.close){closeCol(t.dataset.close);return;}
+  if(t.dataset.reload){const col=openCols.find(c=>c.id===t.dataset.reload);if(col)loadCol(col);return;}
+  if(t.dataset.retry){const col=openCols.find(c=>c.id===t.dataset.retry);if(col)loadCol(col);return;}
+  if(t.dataset.log!==undefined){
+    if(!activeAgent){document.getElementById('acs').style.outline='2px solid var(--red)';setTimeout(()=>document.getElementById('acs').style.outline='',1500);return;}
+    logReach(t.dataset.log,t.dataset.author,t.dataset.url,t);return;
+  }
+  if(t.dataset.agent){activeAgent=t.dataset.agent;save();renderAgents();return;}
+});
+
+document.getElementById('badd').addEventListener('click',()=>{
+  const kw=document.getElementById('qs').value.trim();
+  if(!kw)return;
+  document.getElementById('qs').value='';
+  if(!customKws.includes(kw)){customKws.push(kw);save();}
+  openCol(kw);renderKws();
+});
+document.getElementById('qs').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('badd').click();});
+document.getElementById('bref').addEventListener('click',()=>openCols.forEach((c,i)=>setTimeout(()=>loadCol(c),i*1500)));
+document.getElementById('ball').addEventListener('click',()=>KWS.slice(0,8).forEach((g,i)=>setTimeout(()=>{openCol(g.kws[0]);renderKws();},i*800)));
+document.getElementById('bkwa').addEventListener('click',()=>{
+  const kw=document.getElementById('kwi').value.trim();
+  if(!kw)return;
+  document.getElementById('kwi').value='';
+  if(!customKws.includes(kw)){customKws.push(kw);save();renderKws();}
+  openCol(kw);
+});
+document.getElementById('kwi').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('bkwa').click();});
+document.getElementById('baga').addEventListener('click',()=>{
+  const name=prompt('Your name:');
+  if(!name?.trim())return;
+  const a={id:'a_'+Date.now(),name:name.trim()};
+  agents.push(a);if(!activeAgent)activeAgent=a.id;save();renderAgents();
+  try{
+    const t=JSON.parse(localStorage.getItem('outreachTracker')||'{"agents":[],"logs":[]}');
+    if(!t.agents.find(x=>x.id===a.id)){t.agents.push({id:a.id,name:a.name,color:COLORS[agents.length%COLORS.length],shift:'Day'});localStorage.setItem('outreachTracker',JSON.stringify(t));}
+  }catch(e){}
+});
+
+function relTime(iso){const d=Math.floor((Date.now()-new Date(iso))/1000);if(d<60)return d+'s';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';}
+function hl(text,q){const words=q.split(' ').filter(w=>w.length>2);let o=text;words.forEach(w=>{o=o.replace(new RegExp(`(${w})`,'gi'),'<span class="hl">$1</span>');});return o;}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+renderKws();renderAgents();
+</script>
+</body>
+</html>
