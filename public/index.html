@@ -21,18 +21,15 @@ body{background:var(--bg);color:var(--t);font-family:'Inter',sans-serif;height:1
 .btnp:hover{background:#5a52e0;}
 .inp{background:var(--s2);border:1px solid var(--b);border-radius:7px;color:var(--t);font-size:12px;outline:none;padding:5px 12px;}
 .inp:focus{border-color:var(--a);}
-/* Platform tabs */
 .ptabs{display:flex;gap:6px;padding:0 16px;background:var(--s);border-bottom:1px solid var(--b);height:40px;align-items:center;flex-shrink:0;}
 .ptab{background:none;border:1px solid transparent;border-radius:6px;color:var(--m);cursor:pointer;font-size:12px;font-weight:500;padding:4px 14px;transition:all .15s;}
 .ptab.active{background:var(--s2);border-color:var(--b);color:var(--t);}
 .ptab.reddit.active{border-color:var(--reddit);color:var(--reddit);background:rgba(255,69,0,.1);}
 .ptab.bsky.active{border-color:var(--bsky);color:var(--bsky);background:rgba(0,133,255,.1);}
-/* Agent bar */
 .abar{background:var(--s);border-bottom:1px solid var(--b);padding:0 16px;height:38px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .ach{background:var(--s2);border:1px solid var(--b);border-radius:20px;color:var(--m);cursor:pointer;font-size:12px;font-weight:500;padding:3px 12px;}
 .ach:hover{border-color:var(--a);color:var(--t);}
 .ach.active{border-color:var(--a);color:var(--t);background:rgba(108,99,255,.2);}
-/* Body */
 .body{display:flex;flex:1;overflow:hidden;}
 .sidebar{width:220px;flex-shrink:0;background:var(--s);border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden;}
 .sh{padding:12px 12px 6px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--m);text-transform:uppercase;}
@@ -49,7 +46,6 @@ body{background:var(--bg);color:var(--t);font-family:'Inter',sans-serif;height:1
 .sf input{flex:1;background:var(--s2);border:1px solid var(--b);border-radius:6px;color:var(--t);font-size:12px;padding:5px 8px;outline:none;}
 .sf input:focus{border-color:var(--a);}
 .sf button{background:var(--a);border:none;border-radius:6px;color:white;cursor:pointer;font-size:16px;font-weight:700;padding:0 10px;}
-/* Columns */
 .cols{flex:1;overflow-x:auto;overflow-y:hidden;display:flex;padding:12px;gap:12px;}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:var(--m);text-align:center;}
 .col{width:300px;flex-shrink:0;background:var(--s);border:1px solid var(--b);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;height:100%;}
@@ -61,7 +57,6 @@ body{background:var(--bg);color:var(--t);font-family:'Inter',sans-serif;height:1
 .cmsg{padding:30px;text-align:center;color:var(--m);font-size:12px;}
 .spin{width:20px;height:20px;border:2px solid var(--b);border-top-color:var(--a);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* Cards */
 .card{padding:11px 13px;border-bottom:1px solid var(--b);}
 .card:hover{background:var(--s2);}
 .card.new{border-left:2px solid var(--a);}
@@ -129,9 +124,6 @@ body{background:var(--bg);color:var(--t);font-family:'Inter',sans-serif;height:1
 </div>
 
 <script>
-// Server URL — update this after Railway deployment
-const SERVER = window.location.origin;
-
 const KWS=[
   {cat:'🎨 Commissions',kws:['looking to commission','want to commission','commission open','need artist','looking for artist','find artist','who does commissions','hiring artist']},
   {cat:'🐺 Furry',kws:['fursuit commission','fursuit maker','furry commission','fursona art','looking for fursuit','anthro commission']},
@@ -159,59 +151,96 @@ function save(){
 }
 
 async function search(query){
-  let url, data;
   if(platform==='reddit'){
-    url=`https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=new&limit=25&t=month&raw_json=1`;
-    const res=await fetch(url,{headers:{'Accept':'application/json','User-Agent':'Mozilla/5.0'}});
-    if(!res.ok)throw new Error('Reddit error: '+res.status);
-    data=await res.json();
-    const thirtyDaysAgo=Date.now()-30*24*60*60*1000;
-    return(data?.data?.children||[]).map(c=>c.data)
-      .filter(p=>new Date(p.created_utc*1000)>thirtyDaysAgo)
-      .map(p=>({id:p.id,title:p.title||'',body:(p.selftext||'').slice(0,300),author:p.author||'',sub:p.subreddit||'',url:'https://reddit.com'+(p.permalink||''),score:p.score||0,comments:p.num_comments||0,time:new Date(p.created_utc*1000).toISOString()}));
-  } else {
-    url=`https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&limit=25&sort=latest`;
+    const url='https://www.reddit.com/search.json?q='+encodeURIComponent(query)+'&sort=new&limit=25&t=month&raw_json=1';
     const res=await fetch(url,{headers:{'Accept':'application/json'}});
-    if(!res.ok)throw new Error('Bluesky error: '+res.status);
-    data=await res.json();
-    return(data.posts||[]).map(p=>({id:p.uri,text:p.record?.text||'',title:p.record?.text||'',body:'',author:p.author?.displayName||p.author?.handle||'',handle:p.author?.handle||'',sub:'',url:`https://bsky.app/profile/${p.author?.handle}/post/${p.uri.split('/').pop()}`,score:0,comments:0,likes:p.likeCount||0,reposts:p.repostCount||0,time:p.indexedAt}));
+    if(!res.ok) throw new Error('Reddit error: '+res.status);
+    const data=await res.json();
+    const ago=Date.now()-30*24*60*60*1000;
+    return (data?.data?.children||[]).map(function(c){return c.data;}).filter(function(p){
+      return p.created_utc*1000>ago;
+    }).map(function(p){
+      return {
+        id:p.id,
+        title:p.title||'',
+        body:(p.selftext||'').slice(0,300),
+        author:p.author||'',
+        sub:p.subreddit||'',
+        url:'https://reddit.com'+(p.permalink||''),
+        score:p.score||0,
+        comments:p.num_comments||0,
+        time:new Date(p.created_utc*1000).toISOString()
+      };
+    });
+  } else {
+    const url='https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q='+encodeURIComponent(query)+'&limit=25&sort=latest';
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok) throw new Error('Bluesky error: '+res.status);
+    const data=await res.json();
+    return (data.posts||[]).map(function(p){
+      return {
+        id:p.uri,
+        title:(p.record&&p.record.text)||'',
+        text:(p.record&&p.record.text)||'',
+        body:'',
+        author:(p.author&&(p.author.displayName||p.author.handle))||'',
+        handle:(p.author&&p.author.handle)||'',
+        sub:'',
+        url:'https://bsky.app/profile/'+(p.author&&p.author.handle)+'/post/'+p.uri.split('/').pop(),
+        score:0,
+        comments:0,
+        likes:p.likeCount||0,
+        reposts:p.repostCount||0,
+        time:p.indexedAt
+      };
+    });
   }
+}
+
 function openCol(query){
-  const key=query+'|'+platform;
-  if(openCols.find(c=>c.key===key))return;
-  const col={id:Date.now()+'_'+query,key,query,platform,posts:[],loading:true,error:null,seenIds:new Set(),newCount:0};
+  var key=query+'|'+platform;
+  if(openCols.find(function(c){return c.key===key;}))return;
+  var col={id:Date.now()+'_'+query,key:key,query:query,platform:platform,posts:[],loading:true,error:null,seenIds:new Set(),newCount:0};
   openCols.push(col);
-  const wrap=document.getElementById('cols');
-  wrap.querySelector('.empty')?.remove();
-  const el=document.createElement('div');
+  var wrap=document.getElementById('cols');
+  var emp=wrap.querySelector('.empty');
+  if(emp)emp.remove();
+  var el=document.createElement('div');
   el.className='col';el.dataset.cid=col.id;
-  const icon=platform==='reddit'?'🔴':'🦋';
-  el.innerHTML=`<div class="ch"><span style="font-size:14px">${icon}</span><div class="ct">${esc(query)}</div><button class="ca" data-reload="${col.id}">↻</button><button class="ca" data-close="${col.id}">×</button></div><div class="cb" id="cb_${col.id}"></div>`;
+  var icon=platform==='reddit'?'🔴':'🦋';
+  el.innerHTML='<div class="ch"><span style="font-size:14px">'+icon+'</span><div class="ct">'+esc(query)+'</div><button class="ca" data-reload="'+col.id+'">↻</button><button class="ca" data-close="'+col.id+'">×</button></div><div class="cb" id="cb_'+col.id+'"></div>';
   wrap.appendChild(el);
   loadCol(col);
-  col.timer=setInterval(()=>loadCol(col),90000);
+  col.timer=setInterval(function(){loadCol(col);},90000);
   renderKws();
 }
 
 function closeCol(id){
-  const col=openCols.find(c=>c.id===id);
-  if(col?.timer)clearInterval(col.timer);
-  openCols=openCols.filter(c=>c.id!==id);
-  document.querySelector(`[data-cid="${id}"]`)?.remove();
+  var col=openCols.find(function(c){return c.id===id;});
+  if(col&&col.timer)clearInterval(col.timer);
+  openCols=openCols.filter(function(c){return c.id!==id;});
+  var el=document.querySelector('[data-cid="'+id+'"]');
+  if(el)el.remove();
   if(!openCols.length)document.getElementById('cols').innerHTML='<div class="empty"><div style="font-size:48px">🔍</div><div style="font-size:16px;font-weight:600;color:var(--t)">No columns open</div><div>Click keywords on the left or type above</div></div>';
   renderKws();
 }
 
 async function loadCol(col){
   col.loading=true;col.error=null;
-  const btn=document.querySelector(`[data-reload="${col.id}"]`);
+  var btn=document.querySelector('[data-reload="'+col.id+'"]');
   if(btn)btn.style.animation='spin .8s linear infinite';
   updateBody(col);
   try{
-    const data=await search(col.query);
-    const posts=Array.isArray(data)?data:[];
-    let nc=0;
-    posts.forEach(p=>{if(!col.seenIds.has(p.id)){p.isNew=col.posts.length>0;col.seenIds.add(p.id);if(p.isNew)nc++;}});
+    var data=await search(col.query);
+    var posts=Array.isArray(data)?data:[];
+    var nc=0;
+    posts.forEach(function(p){
+      if(!col.seenIds.has(p.id)){
+        p.isNew=col.posts.length>0;
+        col.seenIds.add(p.id);
+        if(p.isNew)nc++;
+      }
+    });
     col.posts=posts;col.newCount=nc;col.loading=false;col.error=null;
   }catch(e){col.loading=false;col.error=e.message;}
   if(btn)btn.style.animation='';
@@ -219,54 +248,53 @@ async function loadCol(col){
 }
 
 function updateBody(col){
-  const body=document.getElementById('cb_'+col.id);
+  var body=document.getElementById('cb_'+col.id);
   if(!body)return;
   if(col.loading&&!col.posts.length){body.innerHTML='<div class="cmsg"><div class="spin"></div>Searching...</div>';return;}
-  if(col.error){body.innerHTML=`<div class="cmsg" style="color:var(--r)">⚠ ${esc(col.error)}<br><button class="btn" style="margin-top:8px" data-retry="${col.id}">Retry</button></div>`;return;}
+  if(col.error){body.innerHTML='<div class="cmsg" style="color:var(--r)">⚠ '+esc(col.error)+'<br><button class="btn" style="margin-top:8px" data-retry="'+col.id+'">Retry</button></div>';return;}
   if(!col.posts.length){body.innerHTML='<div class="cmsg">No results found</div>';return;}
-  body.innerHTML=col.posts.map(p=>card(p,col.query,col.platform)).join('');
+  body.innerHTML=col.posts.map(function(p){return card(p,col.query,col.platform);}).join('');
 }
 
 function card(p,query,plat){
-  const logged=loggedIds.has(p.id);
-  const isReddit=plat==='reddit';
-  const title=hl(esc(p.title||p.text||''),query);
-  const body=isReddit?(p.body?`<div class="cbody">${esc(p.body)}</div>`:''):(p.text&&p.text!==p.title?`<div class="cbody">${esc(p.text)}</div>`:'');
-  const stats=isReddit?`<div class="cstats"><div class="cstat">▲ <span>${p.score||0}</span></div><div class="cstat">💬 <span>${p.comments||0}</span></div></div>`:`<div class="cstats"><div class="cstat">♥ <span>${p.likes||0}</span></div><div class="cstat">🔁 <span>${p.reposts||0}</span></div></div>`;
-  const subLabel=isReddit?`<span class="csub reddit">r/${esc(p.sub||'')}</span>`:`<span class="csub bsky">🦋 bsky</span>`;
-  const time=relTime(p.time);
-  const author=isReddit?`u/${esc(p.author||'')}`:`@${esc(p.handle||p.author||'')}`;
-  return `<div class="card${p.isNew?' new':''}">
-    <div class="cmeta">${subLabel}<span class="cauthor">${author}</span><span class="ctime">${time}</span></div>
-    <div class="ctitle">${title}</div>
-    ${body}${stats}
-    <div class="cactions">
-      <a class="cab" href="${p.url}" target="_blank">Open</a>
-      <a class="cab go ${plat==='bluesky'?'bsky':''}" href="${p.url}" target="_blank">${isReddit?'Reply':'Reply'}</a>
-      <button class="cab ${logged?'logged':''}" data-log="${p.id}" data-author="${esc(p.author||p.handle||'')}" data-url="${esc(p.url)}" data-plat="${plat}">${logged?'✓ Logged':'+ Log'}</button>
-    </div>
-  </div>`;
+  var logged=loggedIds.has(p.id);
+  var isReddit=plat==='reddit';
+  var title=hl(esc(p.title||p.text||''),query);
+  var body=isReddit?(p.body?'<div class="cbody">'+esc(p.body)+'</div>':''):(p.text&&p.text!==p.title?'<div class="cbody">'+esc(p.text)+'</div>':'');
+  var stats=isReddit?'<div class="cstats"><div class="cstat">▲ <span>'+(p.score||0)+'</span></div><div class="cstat">💬 <span>'+(p.comments||0)+'</span></div></div>':'<div class="cstats"><div class="cstat">♥ <span>'+(p.likes||0)+'</span></div><div class="cstat">🔁 <span>'+(p.reposts||0)+'</span></div></div>';
+  var subLabel=isReddit?'<span class="csub reddit">r/'+esc(p.sub||'')+'</span>':'<span class="csub bsky">🦋 bsky</span>';
+  var time=relTime(p.time);
+  var author=isReddit?'u/'+esc(p.author||''):'@'+esc(p.handle||p.author||'');
+  return '<div class="card'+(p.isNew?' new':'')+'">'+
+    '<div class="cmeta">'+subLabel+'<span class="cauthor">'+author+'</span><span class="ctime">'+time+'</span></div>'+
+    '<div class="ctitle">'+title+'</div>'+
+    body+stats+
+    '<div class="cactions">'+
+    '<a class="cab" href="'+p.url+'" target="_blank">Open</a>'+
+    '<a class="cab go '+(plat==='bluesky'?'bsky':'')+'" href="'+p.url+'" target="_blank">Reply</a>'+
+    '<button class="cab '+(logged?'logged':'')+'" data-log="'+p.id+'" data-author="'+esc(p.author||p.handle||'')+'" data-url="'+esc(p.url)+'" data-plat="'+plat+'">'+(logged?'✓ Logged':'+ Log')+'</button>'+
+    '</div></div>';
 }
 
 function renderKws(){
-  const all=[...KWS,...(customKws.length?[{cat:'🔎 Custom',kws:customKws}]:[])];
-  document.getElementById('kwl').innerHTML=all.map(g=>`
-    <div class="cl">${g.cat}</div>
-    ${g.kws.map(kw=>{
-      const col=openCols.find(c=>c.query===kw&&c.platform===platform);
-      const n=col?.posts?.length||0;
-      return `<div class="ki ${col?'active':''}" data-kw="${esc(kw)}"><div class="kc">${col?'✓':''}</div><div class="kt">${esc(kw)}</div>${n?`<div class="kn">${n}</div>`:''}</div>`;
-    }).join('')}
-  `).join('');
+  var all=KWS.concat(customKws.length?[{cat:'🔎 Custom',kws:customKws}]:[]);
+  document.getElementById('kwl').innerHTML=all.map(function(g){
+    return '<div class="cl">'+g.cat+'</div>'+
+      g.kws.map(function(kw){
+        var col=openCols.find(function(c){return c.query===kw&&c.platform===platform;});
+        var n=col&&col.posts?col.posts.length:0;
+        return '<div class="ki '+(col?'active':'')+'" data-kw="'+esc(kw)+'"><div class="kc">'+(col?'✓':'')+'</div><div class="kt">'+esc(kw)+'</div>'+(n?'<div class="kn">'+n+'</div>':'')+'</div>';
+      }).join('');
+  }).join('');
 }
 
 function renderAgents(){
-  const c=document.getElementById('acs');
+  var c=document.getElementById('acs');
   if(!agents.length){c.innerHTML='<span style="font-size:11px;color:var(--m);font-style:italic">Add your name →</span>';return;}
-  c.innerHTML=agents.map((a,i)=>{
-    const color=COLORS[i%COLORS.length];
-    const active=activeAgent===a.id;
-    return `<button class="ach ${active?'active':''}" data-agent="${a.id}" style="${active?`border-color:${color};background:${color}22;color:${color}`:''}">${esc(a.name)}</button>`;
+  c.innerHTML=agents.map(function(a,i){
+    var color=COLORS[i%COLORS.length];
+    var active=activeAgent===a.id;
+    return '<button class="ach '+(active?'active':'')+'" data-agent="'+a.id+'" style="'+(active?'border-color:'+color+';background:'+color+'22;color:'+color:'')+'">'+esc(a.name)+'</button>';
   }).join('');
 }
 
@@ -275,62 +303,71 @@ function logReach(id,author,url,plat,btn){
   loggedIds.add(id);save();
   btn.textContent='✓ Logged';btn.classList.add('logged');
   try{
-    const t=JSON.parse(localStorage.getItem('outreachTracker')||'{"agents":[],"logs":[]}');
+    var t=JSON.parse(localStorage.getItem('outreachTracker')||'{"agents":[],"logs":[]}');
     if(activeAgent){
       t.logs.push({id:Date.now().toString(),agentId:activeAgent,platform:plat,action:'reply',postUrl:url,clientName:(plat==='reddit'?'u/':'@')+author,gotResponse:'no',notes:'From Lead Finder',date:new Date().toISOString().split('T')[0],ts:Date.now()});
       localStorage.setItem('outreachTracker',JSON.stringify(t));
     }
   }catch(e){}
-  // Log to server/sheets
-  fetch(SERVER+'/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'log',agentId:activeAgent,agentName:agents.find(a=>a.id===activeAgent)?.name||'',accountNiche:'General',platform:plat,clientHandle:author,postUrl:url,response:'no'})});
+  fetch(window.location.origin+'/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'log',agentId:activeAgent,agentName:agents.find(function(a){return a.id===activeAgent;})?agents.find(function(a){return a.id===activeAgent;}).name:'',platform:plat,clientHandle:author,postUrl:url,response:'no'})});
 }
 
-document.addEventListener('click',e=>{
-  const t=e.target;
-  const kwEl=t.closest('.ki');
-  if(kwEl){const kw=kwEl.dataset.kw;const ex=openCols.find(c=>c.query===kw&&c.platform===platform);if(ex)closeCol(ex.id);else openCol(kw);renderKws();return;}
+document.addEventListener('click',function(e){
+  var t=e.target;
+  var kwEl=t.closest('.ki');
+  if(kwEl){
+    var kw=kwEl.dataset.kw;
+    var ex=openCols.find(function(c){return c.query===kw&&c.platform===platform;});
+    if(ex)closeCol(ex.id);else openCol(kw);
+    renderKws();return;
+  }
   if(t.dataset.close){closeCol(t.dataset.close);return;}
-  if(t.dataset.reload){const col=openCols.find(c=>c.id===t.dataset.reload);if(col)loadCol(col);return;}
-  if(t.dataset.retry){const col=openCols.find(c=>c.id===t.dataset.retry);if(col)loadCol(col);return;}
+  if(t.dataset.reload){var col=openCols.find(function(c){return c.id===t.dataset.reload;});if(col)loadCol(col);return;}
+  if(t.dataset.retry){var col2=openCols.find(function(c){return c.id===t.dataset.retry;});if(col2)loadCol(col2);return;}
   if(t.dataset.log!==undefined){
-    if(!activeAgent){document.getElementById('acs').style.outline='2px solid var(--r)';setTimeout(()=>document.getElementById('acs').style.outline='',1500);return;}
+    if(!activeAgent){document.getElementById('acs').style.outline='2px solid var(--r)';setTimeout(function(){document.getElementById('acs').style.outline='';},1500);return;}
     logReach(t.dataset.log,t.dataset.author,t.dataset.url,t.dataset.plat,t);return;
   }
   if(t.dataset.agent){activeAgent=t.dataset.agent;save();renderAgents();return;}
   if(t.dataset.platform){
     platform=t.dataset.platform;
-    document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.ptab').forEach(function(b){b.classList.remove('active');});
     t.classList.add('active');
     renderKws();return;
   }
 });
 
-document.getElementById('badd').addEventListener('click',()=>{
-  const kw=document.getElementById('qs').value.trim();
+document.getElementById('badd').addEventListener('click',function(){
+  var kw=document.getElementById('qs').value.trim();
   if(!kw)return;document.getElementById('qs').value='';
   if(!customKws.includes(kw)){customKws.push(kw);save();}
   openCol(kw);renderKws();
 });
-document.getElementById('qs').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('badd').click();});
-document.getElementById('bref').addEventListener('click',()=>openCols.forEach((c,i)=>setTimeout(()=>loadCol(c),i*1500)));
-document.getElementById('ball').addEventListener('click',()=>KWS.slice(0,8).forEach((g,i)=>setTimeout(()=>{openCol(g.kws[0]);renderKws();},i*800)));
-document.getElementById('bkwa').addEventListener('click',()=>{
-  const kw=document.getElementById('kwi').value.trim();
+document.getElementById('qs').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('badd').click();});
+document.getElementById('bref').addEventListener('click',function(){openCols.forEach(function(c,i){setTimeout(function(){loadCol(c);},i*1500);});});
+document.getElementById('ball').addEventListener('click',function(){KWS.slice(0,8).forEach(function(g,i){setTimeout(function(){openCol(g.kws[0]);renderKws();},i*800);});});
+document.getElementById('bkwa').addEventListener('click',function(){
+  var kw=document.getElementById('kwi').value.trim();
   if(!kw)return;document.getElementById('kwi').value='';
   if(!customKws.includes(kw)){customKws.push(kw);save();renderKws();}
   openCol(kw);
 });
-document.getElementById('kwi').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('bkwa').click();});
-document.getElementById('baga').addEventListener('click',()=>{
-  const name=prompt('Your name:');if(!name?.trim())return;
-  const a={id:'a_'+Date.now(),name:name.trim()};
+document.getElementById('kwi').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('bkwa').click();});
+document.getElementById('baga').addEventListener('click',function(){
+  var name=prompt('Your name:');if(!name||!name.trim())return;
+  var a={id:'a_'+Date.now(),name:name.trim()};
   agents.push(a);if(!activeAgent)activeAgent=a.id;save();renderAgents();
-  try{const t=JSON.parse(localStorage.getItem('outreachTracker')||'{"agents":[],"logs":[]}');if(!t.agents.find(x=>x.id===a.id)){t.agents.push({id:a.id,name:a.name,color:COLORS[agents.length%COLORS.length],shift:'Day'});localStorage.setItem('outreachTracker',JSON.stringify(t));}
+  try{
+    var t=JSON.parse(localStorage.getItem('outreachTracker')||'{"agents":[],"logs":[]}');
+    if(!t.agents.find(function(x){return x.id===a.id;})){
+      t.agents.push({id:a.id,name:a.name,color:COLORS[agents.length%COLORS.length],shift:'Day'});
+      localStorage.setItem('outreachTracker',JSON.stringify(t));
+    }
   }catch(e){}
 });
 
-function relTime(iso){const d=Math.floor((Date.now()-new Date(iso))/1000);if(d<60)return d+'s';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';}
-function hl(text,q){const words=q.split(' ').filter(w=>w.length>2);let o=text;words.forEach(w=>{o=o.replace(new RegExp(`(${w})`,'gi'),'<span class="hl">$1</span>');});return o;}
+function relTime(iso){var d=Math.floor((Date.now()-new Date(iso))/1000);if(d<60)return d+'s';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';}
+function hl(text,q){var words=q.split(' ').filter(function(w){return w.length>2;});var o=text;words.forEach(function(w){o=o.replace(new RegExp('('+w+')','gi'),'<span class="hl">$1</span>');});return o;}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
 renderKws();renderAgents();
