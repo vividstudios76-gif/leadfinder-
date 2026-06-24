@@ -151,50 +151,12 @@ function save(){
 }
 
 async function search(query){
-  if(platform==='reddit'){
-    const url='https://www.reddit.com/search.json?q='+encodeURIComponent(query)+'&sort=new&limit=25&t=month&raw_json=1';
-    const res=await fetch(url,{headers:{'Accept':'application/json'}});
-    if(!res.ok) throw new Error('Reddit error: '+res.status);
-    const data=await res.json();
-    const ago=Date.now()-30*24*60*60*1000;
-    return (data?.data?.children||[]).map(function(c){return c.data;}).filter(function(p){
-      return p.created_utc*1000>ago;
-    }).map(function(p){
-      return {
-        id:p.id,
-        title:p.title||'',
-        body:(p.selftext||'').slice(0,300),
-        author:p.author||'',
-        sub:p.subreddit||'',
-        url:'https://reddit.com'+(p.permalink||''),
-        score:p.score||0,
-        comments:p.num_comments||0,
-        time:new Date(p.created_utc*1000).toISOString()
-      };
-    });
-  } else {
-    const url='https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q='+encodeURIComponent(query)+'&limit=25&sort=latest';
-    const res=await fetch(url,{headers:{'Accept':'application/json'}});
-    if(!res.ok) throw new Error('Bluesky error: '+res.status);
-    const data=await res.json();
-    return (data.posts||[]).map(function(p){
-      return {
-        id:p.uri,
-        title:(p.record&&p.record.text)||'',
-        text:(p.record&&p.record.text)||'',
-        body:'',
-        author:(p.author&&(p.author.displayName||p.author.handle))||'',
-        handle:(p.author&&p.author.handle)||'',
-        sub:'',
-        url:'https://bsky.app/profile/'+(p.author&&p.author.handle)+'/post/'+p.uri.split('/').pop(),
-        score:0,
-        comments:0,
-        likes:p.likeCount||0,
-        reposts:p.repostCount||0,
-        time:p.indexedAt
-      };
-    });
-  }
+  var endpoint=platform==='reddit'?'/api/reddit':'/api/bluesky';
+  var params='?q='+encodeURIComponent(query)+'&limit=25';
+  var res=await fetch(endpoint+params);
+  if(!res.ok) throw new Error('Server error: '+res.status);
+  return res.json();
+}
 }
 
 function openCol(query){
