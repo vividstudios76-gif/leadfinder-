@@ -157,8 +157,6 @@ async function search(query){
   if(!res.ok) throw new Error('Server error: '+res.status);
   return res.json();
 }
-}
-
 function openCol(query){
   var key=query+'|'+platform;
   if(openCols.find(function(c){return c.key===key;}))return;
